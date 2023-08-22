@@ -1,0 +1,550 @@
+c Set model title
+titl   Shear horizontal waves magnet wise pressure distribution with defect a lot of defects but with command glue !
+
+c Use all cores
+mp  omp * *
+
+c Do not save restart file
+rest no
+c ***********************************************************************************************************
+c									           PROBLEM PARAMETERS
+c ***********************************************************************************************************
+
+c ************************ WAVE PARAMETERS  ****************************
+symb freq                          = 205e3			/* 205 kHz center frequency
+symb box                           = 1e-3           /*  node each 1 mm 
+symb box_refined               = $box / 2
+
+c ************************ PLATE PARAMETERS ******************************
+symb d                               = 10e-3			/*  plate thickness
+symb half_length                = 500e-3		   /*  plate half length
+symb y_half_length             = 150e-3
+
+c *********************** EMAT PARAMETERS *****************************************
+symb EMAT_length            = 10e-3		     /*  magnets length
+symb EMAT_gap                = 2.5e-3	         /*  magnets gap
+symb EMAT_y_width          = 20e-3            /*  magnet width
+symb magnets_number      = 6
+symb EMAT_1_x_start       = $EMAT_gap / 2
+symb EMAT_1_x_end         = $EMAT_1_x_start + $EMAT_length
+symb EMAT_2_x_start       = $EMAT_1_x_end + $EMAT_gap
+symb EMAT_2_x_end         = $EMAT_2_x_start + $EMAT_length
+symb EMAT_3_x_start       = $EMAT_2_x_end + $EMAT_gap
+symb EMAT_3_x_end         = $EMAT_3_x_start + $EMAT_length
+symb EMAT_lamda             = 1 * $EMAT_length + 2 * $EMAT_gap
+symb EMAT_row_gap         = 1e-3         /* Gap between the magnets in y dimension           
+symb EMAT_y_start           = $EMAT_row_gap / 2
+symb EMAT_y_end             = $EMAT_y_start + $EMAT_y_width
+
+c *********************** DETECTOR PARAMETERS *****************************************
+symbx var_EMAT_Indx = 4.0e-02
+symb DETECT_1             = 20e-2 + ( 2 * $var_EMAT_Indx )		    /* Morteza magnets length
+symb DETECT_2             = 25e-2 + ( 2 * 4.7e-2 )		       /* Morteza magnets length
+
+c *********************** DEFECT PARAMETERS *****************************************
+
+c **** Structure of a defect *****
+c x centre 
+c y centre
+c defect specific parameters
+c defect depth
+c defect x start and end
+c defect y start and end 
+c defect z start and end
+c ***************************
+
+c When varying the parameters, only the defect specific parameters and defect depth should vary. All the other should be always constant
+
+symb defect_x_centre = 150e-3
+symb defect_y_centre = 0.0
+
+c turn on the defect you want to simulate AND turn off the others. These defect are all symetrical in the z-axis
+symb RECT_DEFECT_IS_ON       = 1
+symb CYL_DEFECT_IS_ON          = 0
+symb ELIPS_DEFECT_IS_ON       = 0
+symb CONE_DEFECT_IS_ON       = 0
+symb NOTCH_DEFECT_IS_ON     = 0
+symb COR_DEFECT_IS_ON         = 0
+      /*  RECTANGULAR DEFECT PARAMETERS 
+if ( $RECT_DEFECT_IS_ON  eq 1 ) then
+	symbx defect_x_half_length      =  15e-3 /* this should be on line 69
+	symb defect_y_half_width       = $defect_x_half_length
+	symbx defect_depth                  = 2e-3  /* this should be on line 71
+	symb defect_x_start                = $defect_x_centre - $defect_x_half_length
+	symb defect_x_end                 = $defect_x_centre + $defect_x_half_length
+	symb defect_y_start                = 0.0
+	symb defect_y_end                 = $defect_y_centre + $defect_y_half_width
+	symb defect_z_start                =  0.0    /* this means the defect starts on the surface 
+	symb defect_z_end                 =  $defect_depth
+     /* CIRCLULAR DEFECT PARAMETERS
+elseif ( $CYL_DEFECT_IS_ON     eq 1 ) then
+symb defect_radius = 0.014
+symb defect_depth = 0.007
+	symb defect_x_start                 = $defect_x_centre - $defect_radius
+	symb defect_x_end                   = $defect_x_centre + $defect_radius
+	symb defect_y_start                 = 0.0
+	symb defect_y_end                   = $defect_y_centre + $defect_radius
+	symb defect_z_start                 = 0.0
+	symb defect_z_end                   = $defect_depth
+	 /* GAUSSIAN LIKE DEFECT PARAMETERS
+elseif ( $ELIPS_DEFECT_IS_ON eq 1 ) then
+	symb defect_radius_x               = 35e-3 
+	symb defect_radius_y               = 5e-3 
+	symb defect_radius_z               = 7e-3 /* defect_radius_z can not be 0
+	symb defect_depth                  = $defect_radius_z
+	symb defect_x_start                = $defect_x_centre - $defect_radius_x
+	symb defect_x_end                  = $defect_x_centre + $defect_radius_x
+	symb defect_y_start                 = 0.0
+	symb defect_y_end                  = $defect_y_centre + $defect_radius_y
+	symb defect_z_start                 = 0.0
+	symb defect_z_end                  = $defect_depth
+	/* CONE DEFECT PARAMETERS
+elseif ( $CONE_DEFECT_IS_ON eq 1 ) then
+	symb defect_radius                 = 15e-3 
+	symb defect_depth                  = 4e-3 
+	symb defect_x_start                = $defect_x_centre - $defect_radius
+	symb defect_x_end                  = $defect_x_centre + $defect_radius
+	symb defect_y_start                = 0.0
+	symb defect_y_end                  = $defect_y_centre + $defect_radius
+	symb defect_z_start                 = 0.0
+	symb defect_z_end                  = $defect_depth
+	/* NOTCH DEFECT PARAMETERS
+elseif ( $NOTCH_DEFECT_IS_ON eq 1 ) then
+	symb defect_x_half_length      = 15e-3 
+	symb defect_y_half_width       = $defect_x_half_length
+	symb defect_quart_len            = $defect_x_half_length / 2
+    symb defect_depth                  = 5e-3
+	symb defect_x_start               = $defect_x_centre - $defect_x_half_length
+	symb defect_x_end                 = $defect_x_centre + $defect_x_half_length
+	symb defect_y_start               = 0.0
+	symb defect_y_end                 = $defect_y_centre + $defect_y_half_width
+	symb defect_z_start               =  0.0     /* this means the defect starts on the surface 
+	symb defect_z_end                 =  $defect_depth
+elseif ( $COR_DEFECT_IS_ON  eq 1 ) then
+	symb defect_x_half_length      = 15e-3 
+	symb defect_y_half_width       = 15e-3
+	symb defect_portion_len         = 0.8 * $defect_x_half_length  /* a portion of defect_x_half_length, half the length of the defect at z_end
+    symb defect_depth                 = 5e-3
+	symb defect_x_start               = $defect_x_centre - $defect_x_half_length
+	symb defect_x_end                 = $defect_x_centre + $defect_x_half_length
+	symb defect_y_start               = 0.0
+	symb defect_y_end                 = $defect_y_centre + $defect_y_half_width
+	symb defect_z_start               =  0.0     /* this means the defect starts on the surface 
+	symb defect_z_end                 =  $defect_depth
+endif
+
+
+c *********************** REFINEMENT BLOCK PARAMETERS *****************************************
+symb refn_x_start = $defect_x_centre - 35e-3
+symb refn_x_end   = $defect_x_centre + 35e-3
+symb refn_y_start = 0.0
+symb refn_y_end   = $defect_y_centre + 35e-3
+
+c ***********************************************************************************************************
+c									              MESHING
+c ***********************************************************************************************************
+
+c  coordinates of keypoints 
+
+c coarse region x
+symb #keycordt  x 1 0.0 $EMAT_1_x_start $EMAT_1_x_end $EMAT_2_x_start $EMAT_2_x_end $EMAT_3_x_start $EMAT_3_x_end $refn_x_start $refn_x_end $DETECT_1 $DETECT_2 $half_length
+symb #get { ic1 } rootmax x
+c refined region x
+symb #keycordt x $ic1+1 $refn_x_start $refn_x_end
+symb #get { idx } rootmax x
+
+c  coarse region y
+symb #keycordt  y 1 0.0 $EMAT_y_start $EMAT_y_end $refn_y_end $y_half_length
+symb #get { jc1 } rootmax y
+c refined region y	
+symb #keycordt  y $jc1+1 0.0 $refn_y_end
+symb #get { jdx } rootmax y	
+
+c coarse region z  
+symb #keycordt  z 1 0.0 $d
+symb #get { kc1 } rootmax z
+c refined region z
+symb #keycordt  z $kc1+1 0.0 $d
+symb #get { kdx } rootmax z
+
+c   mesh
+symb #keyindx i 1 $ic1 1 $box 1
+symb #keyindx i $ic1+1 $idx $i$ic1+1 $box_refined 1
+symb indgrd = $i$idx
+
+symb #keyindx j 1 $jc1 1 $box 1
+symb #keyindx j $jc1+1 $jdx $j$jc1+1 $box_refined 1
+symb jndgrd = $j$jdx
+
+symb #keyindx k 1 $kc1 1 $box 1
+symb #keyindx k $kc1+1 $kdx $k$kc1+1 $box_refined 1
+symb kndgrd = $k$kdx
+
+c **********************************************************************************************************
+c 									               GRID DEFINITION
+c **********************************************************************************************************
+
+grid $indgrd $jndgrd $kndgrd
+
+c **********************************************************************************************************
+c 									               GEOMETRY DEFINITION
+c **********************************************************************************************************
+
+geom
+c   Required for refined grids, turns off and error message that x5 < x4
+	nchk
+	
+	/*  Coarse x
+	xcrd $x1 $x2 $i1 $i2
+	xcrd $x2 $x3 $i2 $i3
+	xcrd $x3 $x4 $i3 $i4
+	xcrd $x4 $x5 $i4 $i5
+	xcrd $x5 $x6 $i5 $i6
+	xcrd $x6 $x7 $i6 $i7
+	xcrd $x7 $x8 $i7 $i8
+	xcrd $x8 $x9 $i8 $i9
+	xcrd $x9 $x10 $i9 $i10
+	xcrd $x10 $x11 $i10 $i11
+	xcrd $x11 $x12 $i11 $i12
+	/*  Fine x
+	xcrd $x13 $x14 $i13 $i14 
+	
+     
+	/*  Coarse y
+	ycrd $y1 $y2 $j1 $j2
+	ycrd $y2 $y3 $j2 $j3
+	ycrd $y3 $y4 $j3 $j4
+	ycrd $y4 $y5 $j4 $j5
+	/*  Fine y
+	ycrd $y6 $y7 $j6 $j7
+
+	/*  Coarse z
+	zcrd $z1 $z2 $k1 $k2
+	/*  Fine z
+	zcrd $z3 $z4 $k3 $k4
+	end
+	
+
+c **********************************************************************************************************
+c 									               MATERIAL PROPERTIES
+c **********************************************************************************************************
+
+/* Material definitions
+symb freqdamp = 128e3
+symb var_dens = 2.696142e+03
+symb var_SV = 3.021675e+03
+symb var_LV = 6.308831e+03
+symb var_SA = 8.532453e+01
+symb var_LA = 6.648725e+01
+c 
+c RITEC+COMSOL +detailed_run5
+c var_dens = 2.696142e+03
+c var_LV = 6.308831e+03
+c var_SV = 3.021675e+03
+c var_LA = 6.648725e+01
+c var_SA = 8.532453e+01
+c var_EMAT_Indx = 4.566456e-02
+
+
+c RITEC+COMSOL +open range_run4
+c var_dens = 2.695223e+03
+c var_LV = 6.371664e+03
+c var_SV = 3.031015e+03
+c var_LA = 6.933258e+01
+c var_SA = 8.570924e+01
+c var_EMAT_Indx = 4.621365e-02
+
+c RITEC+COMSOL +open range_run3
+c var_dens = 2.693446e+03
+c var_LV = 6.276821e+03
+c var_SV = 3.020304e+03
+c var_LA = 6.266270e+01
+c var_SA = 7.966835e+01
+c var_EMAT_Indx = 4.552334e-02
+
+c RITEC+COMSOL +open range
+c var_dens = 2.701984e+03
+c var_LV = 6.189624e+03
+c var_SV = 3.001544e+03
+c var_LA = 6.602640e+01
+c var_SA = 8.191080e+01
+c var_EMAT_Indx = 4.362206e-02
+
+
+c RITEC+COMSOL
+c var_dens = 2.709054e+03
+c var_LV = 6.162650e+03
+c var_SV = 3.114845e+03
+c var_LA = 6.613201e+01
+c var_SA = 8.512702e+01
+c var_EMAT_Indx = 4.939359e-02
+
+c 
+c RITEC
+c var_dens = 2.712380e+03
+c var_LV = 6.181075e+03
+c var_SV = 3.095808e+03
+c var_LA = 6.664920e+01
+c var_SA = 8.471981e+01
+c var_EMAT_Indx = 4.839133e-02
+
+c OnSCale Built-in function
+c var_dens = 2.702472e+03
+c var_LV = 6.308569e+03
+c var_SV = 3.106597e+03
+c var_LA = 6.713298e+01
+c var_SA = 8.542471e+01
+c var_EMAT_Indx = 4.943733e-02
+
+
+matr
+	type elas
+	wvsp on
+c	prop alum 2690 6306 3114
+c  prop alum 2690 6306 3080
+c  prop alum 2690 6306 3070
+c   prop alum 2690 6306 3100
+    prop alum $var_dens $var_LV $var_SV
+c	prop alum 2690 6306 3111
+c    vdmp alum $freqdamp db 0.3 1.2 500e+03 1 10e-3 1
+c    rdmp  alum $freqdamp db 0.3305 0.1755 500e+3 1 2 * 39.91e-3 1   
+     rdmp  alum $freqdamp db $var_LA $var_SA 500e+3 1 8 * 39.91e-3 1  
+
+
+c ( steel)    vdmp steel $freqdamp db 0.3 1.2 1e+06 1 0.01 1
+c (water) vdmp watr $freqdamp db 0.002 0 1e+06 2 0.01 0
+c ( Rexolite) vdmp rxlt $freqdamp db 11 33 3e+07 1 0.01 1
+c     rdmp pmnpt $freqdamp q $qdmp(90) $qsdmp(90) $freqloss 1.0
+
+c  vdmp    steel $freqdamp db 0.3 1.0 10e+06 1 0.01 1
+c   rdmp  steel $freqdamp db 1.43 17.43 205e+03 1 0.1 1
+c  mdmp  
+c   sdmp
+    end
+matr 
+	type elas
+	wvsp on
+	prop dump 0.0 0.0 0.0
+	end
+
+	/* Allocate materials to grid
+site
+	regn  void
+	regn alum $i1 $i$ic1 $j1 $j$jc1 $k1 $k$kc1
+    /*	remove area where refined grid
+	regn void $i8 $i9 $j1 $j4 $k1 $k2
+    /*  put alum in fine region
+	regn alum $i13 $i14 $j6 $j7 $k3 $k4
+    end
+
+	/* Allopcate void to defect
+if ( $RECT_DEFECT_IS_ON eq 1 ) then
+site
+	blok void cent stnd $defect_x_start $defect_x_end $defect_y_start $defect_y_end $defect_z_start $defect_z_end $i13 $i14 $j6 $j7 $k3 $k4
+	end
+elseif ( $CYL_DEFECT_IS_ON eq 1 ) then
+site
+	cyln void stnd z $defect_z_start $defect_depth $defect_x_centre $defect_y_centre $defect_radius $defect_radius * * * * $i13 $i14 $j6 $j7 $k3 $k4
+	end
+elseif ( $ELIPS_DEFECT_IS_ON eq  1 ) then
+site 
+    /* this command has does not provide an keypoints to bound a region, so it turns everything that is inside to the material selected, so it turns for example i13 to matr but also i8.
+    elip void $defect_x_centre $defect_y_centre $defect_z_start stnd $defect_radius_x $defect_radius_y $defect_radius_z
+	end
+elseif ( $CONE_DEFECT_IS_ON eq  1 ) then
+axis
+    defn cone cart $defect_x_centre $defect_y_centre $defect_depth -1 0 0 0 1 0
+site
+     cone3d  void cone $defect_depth $defect_radius
+	 end
+elseif ( $NOTCH_DEFECT_IS_ON eq  1 ) then
+axis 
+    defn notch cart $defect_x_centre $defect_y_centre $defect_z_start -1 0 0 0 0 1 /* x' = -x and y' = z and z' = y 
+	end
+site 
+       poly void notch * * * * * * 0.0 $defect_y_half_width &
+	   $defect_x_half_length 0.0 &
+	   $defect_quart_len $defect_depth &
+	  -$defect_quart_len $defect_depth &
+	  -$defect_x_half_length  0.0  
+	   end
+elseif ( $COR_DEFECT_IS_ON eq 1 ) then
+axis 
+    defn corrosion cart $defect_x_centre $defect_y_centre $defect_z_start -1 0 0 0 0 1 /* x' = -x and y' = z and z' = y 
+	end
+site 
+       poly void corrosion * * * * * * 0.0 $defect_y_half_width &
+	   $defect_x_half_length 0.0 &
+	   $defect_portion_len $defect_depth &
+	  -$defect_portion_len $defect_depth &
+	  -$defect_x_half_length  0.0  
+	   end
+/* add the 'randomeness' to have a corrosion - like defect
+    /* I wil create 4 coordinate systems that have their x axis inlined with the polygon edges. The corrosion frame is in fact inlined with the top edge so I will need to create 3.
+axis
+	defn bottomedge cart $defect_x_centre $defect_y_centre $defect_z_end -1 0 0 0 0 1
+	end
+symb step_cor = 1e-3
+site
+	blok dump cent bottomedge 0.010 0.015 0e-3 3e-3 0.0 0.012 $i13 $i14 $j6 $j7 $k3 $k4
+	end
+
+endif
+
+c if ( 1 lt 0 ) then
+   /* graph
+c grph 
+c c	 type standard
+c c	 mirr y on asym
+c   eye  1.0 -1.0 0.0
+c   zoom 10000
+c c	line on
+c     plot matr   
+c c	blok section indx 1 650 * * * *
+c c	plot matr blok section
+c     end
+c endif
+
+c **********************************************************************************************************
+c 									    BOUNDARY CONDITIONS
+c ************************************************************************************************************
+
+boun
+	defn xmin asym
+	node $i1 $i1 $j1 $j5
+	defn ymin asym
+	node $i1 $i12 $j1 $j1
+c	defn ymax absr
+c	node $i1 $i12 $j5 $j5
+	end
+
+glue 
+	defn gxmin
+	master $i8 $i8 $j1 $j4 $k1 $k2
+	slave $i13 $i13 $j6 $j7 $k3 $k4
+	defn gxman
+	master $i9 $i9 $j1 $j4 $k1 $k2
+	slave $i14 $i14 $j6 $j7 $k3 $k4
+	defn gymin
+	master $i8 $i9 $j1 $j1 $k1 $k2
+	slave $i13 $i14 $j6 $j6 $k3 $k4
+	defn gymax
+	master $i8 $i9 $j4 $j4 $k1 $k2
+	slave $i13 $i14 $j7 $j7 $k3 $k4
+	defn gzmin
+	master $i8 $i9 $j1 $j4 $k1 $k1
+	slave $i13 $i14 $j6 $j7 $k3 $k3
+	defn gzmax
+	master $i8 $i9 $j1 $j4 $k2 $k2
+	slave $i13 $i14 $j6 $j7 $k4 $k4
+	end
+
+c  **********************************************************************************************************
+c 									    LOADING
+c ************************************************************************************************************
+ /* select load  SH0 simulation with 128kHz OR SH1 simulation with 205kHz 
+symb SH0_LOAD = 1
+
+if ( $SH0_LOAD eq 1 ) then
+c data hist drive * 'C:\Users\konst\Desktop\EMAT_SH_waves _validation\SH_Simulation_Data\force_profile_128kHz.csv'   /*COMSOL_Load.csv  /* COMSOL_Load.csv /* four_cycles_311_kHz.csv	/* Load_205_kHz_3cycles.txt  /* Read contents of file 'function.csv'
+c data hist drive * RITEC_Excitation_Signal_128kHz.txt
+data hist drive * RITEC_Comsol_rescaled.csv
+func  hist drive	
+c func    sine 128e3 1 0.0 3 
+else
+c data hist drive * 'C:\Users\konst\Desktop\EMAT_SH_waves _validation\SH_Simulation_Data\force_profile_205kHz.csv'   /*COMSOL_Load.csv  /* COMSOL_Load.csv /* four_cycles_311_kHz.csv	/* Load_205_kHz_3cycles.txt  /* Read contents of file 'function.csv'
+c func sine 205e3 0.2 0.0 3 
+data hist drive * RITEC_Excitation_Signal_205kHz.txt 
+func  hist drive
+endif
+
+plod
+      pdef myload1 func /*drive
+	  vctr myvctr1 0 1 0
+      sdef myload1 myvctr1 $i2 $i3 $j2 $j3 $k1 $k1
+	  end
+plod
+      pdef myload2 func /*drive 
+	  vctr myvctr2 0 -1 0
+      sdef myload2 myvctr2 $i4 $i5 $j2 $j3 $k1 $k1	
+	  end
+plod
+      pdef myload3 func /*drive 
+	  vctr myvctr3 0 1 0
+      sdef myload3 myvctr3 $i6 $i7 $j2 $j3 $k1 $k1	
+	  end
+
+c  **********************************************************************************************************
+c 									   TIME STEP
+c ************************************************************************************************************
+
+time 6.4000e-08 0.0 1
+
+c **********************************************************************************************************
+c 									    RESULTS
+c ************************************************************************************************************
+
+calc 
+      sj2p
+      disp
+      end
+
+pout    
+      form matlab 
+      hist  func /*drive                                            /* The input function       
+	  hist   yvel $i10 $i10 1 $j1 $j1 1 $k1 $k1 1
+	  hist  yvel $i11 $i11 1 $j1 $j1 1 $k1 $k1 1
+      end
+
+zone auto			
+
+prcs
+
+c Model time step
+if ( $SH0_LOAD eq 1 ) then
+	symb simtime	= 250e-6
+else
+	symb simtime	= 260e-6
+endif
+symb nloops		= 100
+symb #get { step } timestep
+symb nruns = nint ( $simtime / $step )  
+symb nexec2 = nint ( $nruns / $nloops ) 
+
+/* Setting the sampling frequency
+
+
+/* set up plotting
+
+c if ( 1 lt 0 ) then
+c grph
+c     type stnd 
+c     set imag avi      /* set image capture for movie file generation
+c     nvew 2 1         /* set up 3 plotting windows in layout number 3
+c c	mirr x on 
+c c	mirr y on 
+c 	end
+c endif
+
+proc plot save  /* setting up procedure with name 'plot
+exec $nexec2    /* run model for 'nexec2' timesteps
+
+c grph
+c    type stnd         
+c 	plot sj2p	      /* rang 0 1e3		/* Plot Shear energy
+c  plot  2
+c   imag             /* snapshot of graphics window for movie generation
+c   end
+
+end$ proc            /* end procedure
+
+proc plot $nloops    /* call 'plot' procedure 'nloops' times
+
+symb #get { label } jobname         /* get model job name
+symb #save '$label.symb'           /* save symbol file
+
+c end of input file     
+stop
+
+
+
